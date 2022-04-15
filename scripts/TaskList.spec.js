@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { TaskList } from './TaskList'
 
 describe('TaskList', () => {
@@ -75,6 +75,20 @@ describe('TaskList', () => {
     expect(li.children[1].innerHTML).toBe('Name for a task')
   })
 
+  it('should add task through dom', () => {
+    const parent = document.querySelector('body')
+    new TaskList(parent)
+
+    expect(parent.querySelector('ul').children.length).toBe(0)
+
+    parent.querySelector('[type="text"]').value = 'first task'
+    parent.querySelector('[type="submit"].add').click()
+
+    expect(parent.querySelector('ul').children.length).toBe(1)
+    expect(parent.querySelector('ul').children[0].children[1].textContent).toBe('first task')
+    expect(parent.querySelector('[type="text"]').value).toBe("")
+  })
+
   it('should return new task on add method call', () => {
     const list = new TaskList()
     const task = list.add('Name for a task')
@@ -128,6 +142,22 @@ describe('TaskList', () => {
     expect(taskNode.children[0].innerHTML).toBe('×')
   })
 
+  it('should toggle done status through the dom', () => {
+    const parent = document.querySelector('body')
+    new TaskList(parent, {
+      id: 1,
+      name: "My list",
+      items: [{ id: 2, name: "task", done: false }]
+    })
+
+    const listItem = parent.querySelector('[data-id="2"]')
+
+    expect(listItem.dataset.done).toBe("false")
+
+    listItem.querySelector('.toggler').click()
+    expect(listItem.dataset.done).toBe("true")
+  })
+
   it('should remove item from items', () => {
     const list = new TaskList()
     const task = list.add('Name for a task')
@@ -171,6 +201,26 @@ describe('TaskList', () => {
     })
   })
 
+  it('should remove item through the dom', () => {
+    const parent = document.querySelector('body')
+    new TaskList(parent, {
+      id: 1,
+      name: 'My List',
+      items: [
+        { id: 2, name: 'kkk', done: false },
+        { id: 3, name: 'zzz', done: false },
+        { id: 4, name: 'bbb', done: false },
+      ]
+    })
+
+    expect(parent.querySelector('ul').children.length).toBe(3)
+
+    parent.querySelector('.task-remover').click()
+
+    expect(parent.querySelector('ul').children.length).toBe(2)
+    expect(parent.querySelector('[data-id="2"]')).toBeNull()
+  })
+
   it('should remove list from dom', () => {
     const parent = document.querySelector('body')
     const list = new TaskList(parent)
@@ -179,5 +229,25 @@ describe('TaskList', () => {
 
     list.destroy()
     expect(parent.children.length).toBe(0)
+  })
+
+  it('should remove list through the dom', () => {
+
+    const mockFn = vi.fn()
+
+    const parent = document.querySelector('body')
+    parent.addEventListener('list-destroyed', mockFn)
+
+    const list = new TaskList(parent)
+
+    expect(parent.children.length).toBe(1)
+    expect(parent.querySelector(`[data-id="${list.id}"]`)).not.toBeNull()
+
+    parent.querySelector('.list-remover').click()
+
+    expect(mockFn).toHaveBeenCalled()
+
+    expect(parent.children.length).toBe(0)
+    expect(parent.querySelector(`[data-id="${list.id}"]`)).toBeNull()
   })
 })

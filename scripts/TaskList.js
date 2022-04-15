@@ -36,7 +36,7 @@ export class TaskList {
     if (this.#isRendered) {
       const ul = this.#listNode.querySelector(`[data-id="${this.id}"] ul`)
 
-      ul.innerHTML += this.#scaffoldListItem(newItem)
+      ul.append(this.#scaffoldListItem(newItem))
     }
 
     return newItem
@@ -81,14 +81,15 @@ export class TaskList {
     wrapper.dataset.testId = 'task-list'
     wrapper.dataset.id = this.id
 
-    const listItems = this.items.map(this.#scaffoldListItem)
+    const header = this.#createHeader()
 
-    wrapper.innerHTML = [
-      `\n<h5>${this.name}</h5>\n`,
-      `<ul>`,
-      ...listItems,
-      `</ul>\n`
-    ].join('')
+    const ul = document.createElement('ul')
+    const listItems = this.items.map(item => this.#scaffoldListItem(item));
+    listItems.forEach(el => ul.appendChild(el));
+
+    const form = this.#createFooter();
+
+    [header, ul, form].forEach(el => wrapper.appendChild(el));
 
     this.#listNode = wrapper
 
@@ -101,12 +102,76 @@ export class TaskList {
     return !!this._parent && !!this.#listNode
   }
 
-  #scaffoldListItem(item) {
-    return `
-    <li data-id="${item.id}" data-done="${item.done}">
-      <span>${item.done ? '&times;' : '&omicron;'}</span>      
-      <h6>${item.name}</h6>
-    </li>
+  #createHeader() {
+    const header = document.createElement('header')
+
+    const h5 = document.createElement('h5')
+    h5.innerHTML = this.name
+
+    const removeBtn = document.createElement('button')
+    removeBtn.classList.add('list-remover')
+    removeBtn.innerHTML = '&times;'
+    removeBtn.addEventListener('click', () => {
+      const destroyedEvent = new CustomEvent('list-destroyed', {
+        bubbles: true,
+        cancelable: true
+      })
+
+      this.#listNode.dispatchEvent(destroyedEvent)
+      this.destroy()
+    });
+
+    [h5, removeBtn].forEach(el => header.append(el))
+
+    return header
+  }
+
+  #createFooter() {
+    const form = document.createElement('form')
+    form.innerHTML = `
+      <input name="task" type="text" >
+      <input type="submit" class="add" value="add">
     `
+    form.addEventListener('submit', e => {
+      e.preventDefault()
+      const { task } = Object.fromEntries(new FormData(e.target).entries())
+
+      const trimmed = task.trim().replace(/\s+/g, ' ')
+      if (!trimmed) return
+
+      this.add(trimmed)
+      e.target.reset()
+    })
+
+    return form
+  }
+
+  #scaffoldListItem(item) {
+    const { id, done, name } = item
+
+    const li = document.createElement('li')
+    li.dataset.id = id
+    li.dataset.done = done
+
+    const span = document.createElement('span')
+    span.classList.add('toggler')
+    span.innerHTML = done ? '&times;' : '&omicron;'
+
+    span.addEventListener('click', () => {
+      this.toggle(id)
+    })
+
+    const h6 = document.createElement('h6')
+    h6.innerHTML = name;
+
+    const removeBtn = document.createElement('button')
+    removeBtn.classList.add('task-remover');
+    removeBtn.innerHTML = '&times;'
+    removeBtn.addEventListener('click', () => {
+      this.remove(id)
+    });
+
+    [span, h6, removeBtn].forEach(el => li.append(el))
+    return li
   }
 } 

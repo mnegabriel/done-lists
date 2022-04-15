@@ -1,0 +1,8 @@
+// Vitest Snapshot v1
+
+exports[`TaskList > should create list into dom 1`] = `
+"<article data-test-id=\\"task-list\\" data-id=\\"1\\"><header><h5>My List</h5><button class=\\"list-remover\\">×</button></header><ul><li data-id=\\"2\\" data-done=\\"true\\"><span class=\\"toggler\\">×</span><h6>first task</h6><button class=\\"task-remover\\">×</button></li><li data-id=\\"3\\" data-done=\\"false\\"><span class=\\"toggler\\">ο</span><h6>second task</h6><button class=\\"task-remover\\">×</button></li></ul><form>
+      <input name=\\"task\\" type=\\"text\\">
+      <input type=\\"submit\\" class=\\"add\\" value=\\"add\\">
+    </form></article>"
+`;
