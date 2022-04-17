@@ -1,4 +1,5 @@
-import { uid } from "./helpers/general"
+import { transformWithEsbuild } from "vite"
+import { uid } from "../helpers/general"
 
 export class TaskList {
   #listNode = null
@@ -10,6 +11,10 @@ export class TaskList {
     else this.#fromScratch()
 
     this.#renderList()
+  }
+
+  get node() {
+    return this.#listNode
   }
 
   #fromData(data) {
@@ -94,8 +99,6 @@ export class TaskList {
     this.#listNode = wrapper
 
     this._parent && this._parent.append(this.#listNode)
-
-    return wrapper
   }
 
   get #isRendered() {
