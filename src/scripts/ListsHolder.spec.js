@@ -38,7 +38,8 @@ describe('ListsHolder', () => {
 
     app.parentNode.querySelector('button[data-testid="list-adder"]').click();
     expect(app.listNode.children.length).toBe(1);
-    expect(app.listNode.children[0]).toMatchInlineSnapshot();
+    expect(app.listNode.children[0].tagName).toBe('ARTICLE');
+    expect(app.listNode.children[0].dataset.id).toBeDefined();
   });
 
   it('should add to local data information from the new list', () => {
@@ -67,8 +68,9 @@ describe('ListsHolder', () => {
 
     const secondId = app.collection[1].id;
 
-    app.collection[1].destroy();
+    app.listNode.querySelector(`[data-id="${secondId}"] .list-remover`).click();
 
+    expect(app.collection.length).toBe(2);
     expect(app.listNode.querySelector(`[data-id="${secondId}"]`)).toBeNull();
   });
 });

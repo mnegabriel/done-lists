@@ -1,4 +1,10 @@
+import { EVENT_NAMES } from '../helpers/constants';
 import { uid } from '../helpers/general';
+
+const emitEvent = name => new CustomEvent(name, {
+  bubbles: true,
+  cancelable: true
+});
 
 export class TaskList {
   #listNode = null;
@@ -14,6 +20,14 @@ export class TaskList {
 
   get node() {
     return this.#listNode;
+  }
+
+  get rawData() {
+    return {
+      id: this.id,
+      name: this.name,
+      items: this.items,
+    };
   }
 
   #fromData(data) {
@@ -40,7 +54,13 @@ export class TaskList {
     if (this.#isRendered) {
       const ul = this.#listNode.querySelector(`[data-id="${this.id}"] ul`);
 
-      ul.append(this.#scaffoldListItem(newItem));
+      const li = this.#scaffoldListItem(newItem);
+
+      ul.append(li);
+
+      const addEvent = emitEvent(EVENT_NAMES.TASK_CREATED);
+
+      li.dispatchEvent(addEvent);
     }
 
     return newItem;
@@ -58,6 +78,9 @@ export class TaskList {
       const node = this.#listNode.querySelector(`[data-id="${id}"]`);
       node.dataset.done = selected.done;
       node.children[0].innerHTML = selected.done ? '&times;' : '&omicron;';
+
+      const toggledEvent = emitEvent(EVENT_NAMES.TASK_TOGGLED);
+      node.dispatchEvent(toggledEvent);
     }
   }
 
@@ -69,11 +92,19 @@ export class TaskList {
     this.items.splice(index, 1);
 
     if (this._parent) {
-      this.#listNode.querySelector(`[data-id="${id}"]`).remove();
+      const node = this.#listNode.querySelector(`[data-id="${id}"]`);
+
+      const toggledEvent = emitEvent(EVENT_NAMES.TASK_REMOVED);
+      node.dispatchEvent(toggledEvent);
+
+      node.remove();
     }
   }
 
   destroy() {
+    const destroyedEvent = emitEvent(EVENT_NAMES.LIST_DESTROYED);
+
+    this.#listNode.dispatchEvent(destroyedEvent);
     this.#listNode.remove();
   }
 
@@ -111,12 +142,6 @@ export class TaskList {
     removeBtn.classList.add('list-remover');
     removeBtn.innerHTML = '&times;';
     removeBtn.addEventListener('click', () => {
-      const destroyedEvent = new CustomEvent('list-destroyed', {
-        bubbles: true,
-        cancelable: true,
-      });
-
-      this.#listNode.dispatchEvent(destroyedEvent);
       this.destroy();
     });
 
@@ -139,6 +164,7 @@ export class TaskList {
       if (!trimmed) return;
 
       this.add(trimmed);
+
       e.target.reset();
     });
 

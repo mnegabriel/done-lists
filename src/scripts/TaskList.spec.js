@@ -1,4 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
+import { EVENT_NAMES } from '../helpers/constants';
 import { TaskList } from './TaskList';
 
 describe('TaskList', () => {
@@ -41,6 +42,22 @@ describe('TaskList', () => {
       });
 
       expect(parent.innerHTML).toMatchSnapshot();
+    });
+
+    it('should be able to return taskList raw data', () => {
+      const parent = document.querySelector('body');
+      const backup = {
+        id: 1,
+        name: 'My List',
+        items: [
+          { id: 2, name: 'first task', done: true },
+          { id: 3, name: 'second task', done: false },
+        ],
+      };
+
+      const list = new TaskList(parent, backup);
+
+      expect(list.rawData).toEqual(backup);
     });
   });
 
@@ -99,6 +116,19 @@ describe('TaskList', () => {
       const task = list.add('Name for a task');
 
       expect(list.items[0]).toEqual(task);
+    });
+
+    it('should emit event after task created', () => {
+      const mockFn = vi.fn();
+      const parent = document.querySelector('body');
+      parent.addEventListener(EVENT_NAMES.TASK_CREATED, mockFn);
+
+      expect(mockFn).not.toHaveBeenCalled();
+
+      const list = new TaskList(parent);
+      list.add('Test');
+
+      expect(mockFn).toHaveBeenCalled();
     });
   });
 
@@ -164,6 +194,21 @@ describe('TaskList', () => {
       listItem.querySelector('.toggler').click();
       expect(listItem.dataset.done).toBe('true');
     });
+
+    it('should emit toggle event', () => {
+
+      const mockFn = vi.fn();
+      const parent = document.querySelector('body');
+      parent.addEventListener(EVENT_NAMES.TASK_TOGGLED, mockFn);
+
+
+      const list = new TaskList(parent);
+      const task = list.add('Test');
+      expect(mockFn).not.toHaveBeenCalled();
+      list.toggle(task.id);
+
+      expect(mockFn).toHaveBeenCalled();
+    });
   });
 
   describe('remove', () => {
@@ -224,6 +269,23 @@ describe('TaskList', () => {
       expect(parent.querySelector('ul').children.length).toBe(2);
       expect(parent.querySelector('[data-id="2"]')).toBeNull();
     });
+
+
+
+    it('should emit remove event', () => {
+
+      const mockFn = vi.fn();
+      const parent = document.querySelector('body');
+      parent.addEventListener(EVENT_NAMES.TASK_REMOVED, mockFn);
+
+
+      const list = new TaskList(parent);
+      const task = list.add('Test');
+      expect(mockFn).not.toHaveBeenCalled();
+      list.remove(task.id);
+
+      expect(mockFn).toHaveBeenCalled();
+    });
   });
 
   describe('destroy', () => {
@@ -254,7 +316,7 @@ describe('TaskList', () => {
       const mockFn = vi.fn();
 
       const parent = document.querySelector('body');
-      parent.addEventListener('list-destroyed', mockFn);
+      parent.addEventListener(EVENT_NAMES.LIST_DESTROYED, mockFn);
 
       new TaskList(parent);
 

@@ -1,13 +1,14 @@
+import { EVENT_NAMES } from '../helpers/constants';
 import { TaskList } from './TaskList';
 
 export class ListsHolder {
-  collection;
+  collection = [];
+  listnode = null;
   #parentNode;
 
   constructor(selector) {
-    this.collection = [];
-
     this.#mountOnNode(selector);
+    this.#addDestroyListener();
   }
 
   get parentNode() {
@@ -26,8 +27,24 @@ export class ListsHolder {
     listAddBtn.innerHTML = 'New List';
     listAddBtn.addEventListener('click', () => {
       const newList = new TaskList(this.listNode);
-      this.collection.push(newList);
+      this.collection.push(newList.rawData);
     });
+
     [this.listNode, listAddBtn].forEach(el => this.#parentNode.append(el));
+  }
+
+  #addDestroyListener() {
+    this.listNode.addEventListener(EVENT_NAMES.LIST_DESTROYED, e => {
+      const { id } = e.target.dataset;
+
+      this.deleteFromCollection(id);
+    });
+  }
+
+  deleteFromCollection(id) {
+    const index = this.collection.findIndex(list => list.id == id);
+
+    if (index < 0) return;
+    this.collection.splice(index, 1);
   }
 }
